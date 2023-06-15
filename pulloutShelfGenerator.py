@@ -44,7 +44,7 @@ lineNumPoints = 1000
 numAngles = 400
 maxLength = 10
 vectorLength = 10 #TODO: should be tied to dimension of cabinet ideally
-
+lengthThreshold = 0.15 #target length between points for 2ndary calculation
 #step 2. Two lines, each defined by bezier curves. Line1 defines the translational component of the shelf's movement. Line2 defines the rotational component.
 
 #use bezier curve to create path for shelf to follow.
@@ -88,7 +88,7 @@ print("done")
 
 print("secondary stage")
 #expanding the area in a secondary stage. Find all sides with length above threshold, get midpoint, create new point expanded along the normal
-lengthThreshold = 0.15
+
 allDistancesBelowThreshold = False
 distanceTooLong = False
 iterativeExtensionAlongNormal = 10
@@ -126,7 +126,7 @@ while not allDistancesBelowThreshold:
             
             #find maximum extensible length along normal before hitting a wall, generate new point along that vector.
             [newX,newY] = ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,[mx,my],[normX,normY])
-            ax.plot(mx,my,'x')
+            # ax.plot(mx,my,'x')
             xFinal.insert(i+1,newX)
             yFinal.insert(i+1,newY)
             # i = i + 1
@@ -219,7 +219,7 @@ anim = FuncAnimation(fig, animate, init_func=init,
 # anim2 = FuncAnimation(fig, animate2, init_func=init,
 #                                frames=numAngles, interval=4000/numAngles, blit=True)
 
-# anim.save('rotating_shelf.gif', writer='imagemagick')
+anim.save('rotating_shelf.gif', writer='imagemagick')
 
 plt.axis('equal')
 plt.show()
