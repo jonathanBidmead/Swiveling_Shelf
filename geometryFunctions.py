@@ -89,6 +89,9 @@ def bezier(P,res,spacing = 'lin'):
 
     if spacing == 'lin':
         t = np.linspace(0,1,res)
+    else:
+        t = np.linspace(0,1,res)
+
 
     X = (1-t)**3 * x0 + t * x1 * (3*(1-t)**2) + x2 * 3*(1-t)*t**2 + x3 * t**3
     Y = (1-t)**3 * y0 + t * y1 * (3*(1-t)**2) + y2 * 3*(1-t)*t**2 + y3 * t**3
@@ -139,6 +142,7 @@ def newPointAlongNormal(pt1,pt2,midpt,dist):
 
     return [normX,normY]
 
+#new point is [dist] length from pt1
 def pointOnLineAtDist(pt1,pt2,dist):
     x1 = pt1[0]
     y1 = pt1[1]
@@ -152,6 +156,7 @@ def pointOnLineAtDist(pt1,pt2,dist):
 
     newX = x1 + dist*deltaX/L
     newY = y1 + dist*deltaY/L
+
 
     return [newX,newY]
 
@@ -174,3 +179,27 @@ def createCabinetPath(walls):
     codes.append(Path.CLOSEPOLY)
 
     return Path(vertices,codes)
+
+def isPointOnLine(pt1,pt2,point):
+    x1 = pt1[0]
+    y1 = pt1[1]
+    x2 = pt2[0]
+    y2 = pt2[1]
+    xp = point[0]
+    yp = point[1]
+    epsilon = 0.01
+    LHS = (yp-y1)*(x1-x2)
+    RHS = (xp-x1)*(y1-y2)
+
+    return -epsilon < LHS-RHS < epsilon
+
+def pointsTheSame(pt1,pt2):
+    x1 = pt1[0]
+    y1 = pt1[1]
+    x2 = pt2[0]
+    y2 = pt2[1]
+    epsilon = 0.01
+
+    Xequal = -epsilon < x1-x2 < epsilon
+    Yequal = -epsilon < y1-y2 < epsilon
+    return Xequal and Yequal

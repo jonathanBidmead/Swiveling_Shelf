@@ -41,10 +41,10 @@ cabinetWalls.append(thickness2)
 
 #fiddle-able variables
 lineNumPoints = 1000
-numAngles = 400
+numAngles = 100
 maxLength = 10
 vectorLength = 10 #TODO: should be tied to dimension of cabinet ideally
-lengthThreshold = 0.15 #target length between points for 2ndary calculation
+lengthThreshold = 0.05 #target length between points for 2ndary calculation
 #step 2. Two lines, each defined by bezier curves. Line1 defines the translational component of the shelf's movement. Line2 defines the rotational component.
 
 #use bezier curve to create path for shelf to follow.
@@ -93,9 +93,15 @@ allDistancesBelowThreshold = False
 distanceTooLong = False
 iterativeExtensionAlongNormal = 10
 test_iter = 0
-max_test_iter = 60#when < test_iter, nothing here is used
+max_test_iter = 200#when < test_iter, nothing here is used
+master_iters = 0
+max_master_iters = 100000
 while not allDistancesBelowThreshold:
     distanceTooLong = False
+    firstPointOnWall = False
+    secondPointOnWall = False
+    continueFlag = False
+    testBool = False
     # xFinal3 = xFinal
     # yFinal3 = yFinal
     for i in range(len(xFinal)):
@@ -111,6 +117,27 @@ while not allDistancesBelowThreshold:
             y2 = yFinal[0]
 
         length = lineLength([x1,y1],[x2,y2])#get length between two neighbouring points
+
+
+        #edge case: if both points are on the same wall, just make a new midpt and leave it at that
+        if length > lengthThreshold:
+            for wall in cabinetWalls:
+                if not pointsTheSame([x1,y1],[x2,y2]):
+                    firstPointOnWall = isPointOnLine(wall.startPoint,wall.endPoint,[x1,y1])
+                    if firstPointOnWall:
+                        secondPointOnWall = isPointOnLine(wall.startPoint,wall.endPoint,[x2,y2])
+
+                        if secondPointOnWall:
+                            # [newX,newY] = pointOnLineAtDist([x1,y1],[x2,y2],lengthThreshold)
+                            [newX,newY] = getMidPoint([x1,y1],[x2,y2])
+                            xFinal.insert(i+1,newX)
+                            yFinal.insert(i+1,newY)
+                            print("wall point inserted",newX,newY,i)
+                            continueFlag = True
+                            # distanceTooLong = True
+                            break
+        if continueFlag:
+            continue
 
         
         if (length > lengthThreshold and (test_iter < max_test_iter)):#if length too large, get midpoint. Create new point along the normal (for now just iterate on small distance)
@@ -129,21 +156,46 @@ while not allDistancesBelowThreshold:
             # ax.plot(mx,my,'x')
             xFinal.insert(i+1,newX)
             yFinal.insert(i+1,newY)
+            print("line point inserted",newX,newY,i)
             # i = i + 1
             test_iter = test_iter + 1
-            
-            distanceTooLong = True#if new points needed to be added, continue to loop
-    
-    # xFinal = xFinal2
-    # yFInal = yFinal2
-    if distanceTooLong == False or len(xFinal) > 1000:
+            if testBool == True:
+                distanceTooLong = True#if new points needed to be added, continue to loop
+                # testBool = False
+            testBool = True
+
+
+    for i in range(len(xFinal)):
+        #making sure the thing can wrap around
+        x1 = xFinal[i]
+        y1 = yFinal[i]
+        try:#getting next point. Wraps around when at end of the list
+            x2 = xFinal[i+1]
+            y2 = yFinal[i+1]
+        except:
+            x2 = xFinal[0]
+            y2 = yFinal[0]
+
+        length = lineLength([x1,y1],[x2,y2])#get length between two neighbouring points
+
+        if length > lengthThreshold:
+            distanceTooLong = True
+
+    if distanceTooLong == False or master_iters > max_master_iters:
         allDistancesBelowThreshold = True
+        if distanceTooLong == False:
+            print("all distances below threshold")
+        if test_iter > max_test_iter:
+            print("iteration limit: too many points added in secondary stage")
+        if master_iters > max_master_iters:
+            print("iteration limit: master_iters too large")
+    master_iters = master_iters + 1
 
 print("secondary stage complete")
 
-print("beging plotting")
+print("begin plotting")
 #plotting from here on
-ax.plot(xFinal,yFinal,'-o')#plot the outline of the shelf
+ax.plot(xFinal,yFinal,'-b')#plot the outline of the shelf
 ax.plot(rotX/lineNumPoints + 3,rotY - 1)#plot the rotational curve
 ax.plot(lineX,lineY,'g:')#plot the path of travel
 
@@ -155,7 +207,7 @@ for wall in cabinetWalls:
 
 xFinal2 = []
 yFinal2 = []
-line, = ax.plot([], [],'-s', lw=3)
+line, = ax.plot([], [],'-g', lw=3)
 #animating the shelf to move along the pathway
 #TODO make this work with new method
 
@@ -219,7 +271,7 @@ anim = FuncAnimation(fig, animate, init_func=init,
 # anim2 = FuncAnimation(fig, animate2, init_func=init,
 #                                frames=numAngles, interval=4000/numAngles, blit=True)
 
-anim.save('rotating_shelf.gif', writer='imagemagick')
+# anim.save('rotating_shelf.gif', writer='Pillow',fps=60)
 
 plt.axis('equal')
 plt.show()

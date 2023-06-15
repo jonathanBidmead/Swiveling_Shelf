@@ -8,7 +8,7 @@ def computeMinLengthForEachAngle(maxLength,angleList,lineNumPoints,lineX,lineY,v
     minLengthList = []
     linePosForMinL = []
     length = maxLength
-
+    i_dev = 0
     devpt = 7#for debugging
 
     for angle in angleList:
@@ -98,6 +98,9 @@ def assembleVectorsAroundPoint(lineX,lineY,numAngles,vectorLength,angleList,rotY
 #figure out maximum normal vector length by checking intersections with all walls along length of travel
 def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
 
+
+    
+
     cabinetPath = createCabinetPath(cabinetWalls)
     reversedNormalFlag = False
     length = 10#TODO set up defined variables for all these things
@@ -108,8 +111,13 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
     pt1 = midpt.copy()
     pt2 = normpt.copy()
     maxLengthList = []
-    maxLengthList2 = []
+    wallList = []
+    chosenWall = None
     for i in range(len(lineX)):#TODO chenge back to check all points in lineX
+        
+        
+        
+        
         length = 10#TODO
         reversedNormalFlag = False
         #computing transformation relative to startpoint
@@ -138,58 +146,28 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
                 continue
             [Px,Py] = computeIntersection(pt1,pt2,wall.startPoint,wall.endPoint)
             lengthTemp = lineLength(pt1,[Px,Py])
-            
             if abs(lengthTemp) < abs(length):
                 if reversedNormalFlag:
                     lengthTemp = - lengthTemp
                     # print(lengthTemp,midpt[0]+lineX[0],midpt[1]+lineY[0])
                 length = lengthTemp
-
+                chosenWall = wall
+        wallList.append(chosenWall)
         maxLengthList.append(length)
-        
 
-        #TODO if maximum length is (close to) zero, try the whole thing again but with the normal reversed (as the midpt may be outside the shape)
-    #2nd idea: push the midpoint back towards the middle of the shape so the normal is always positive
-    if (min(maxLengthList) < 0.1 and False):
-        reversedNormalFlag = True
-        newNormpt = reverseNormal(midpt,normpt)
-        length = 10#TODO
-        maxLengthList2 = []
-        for i in range(len(lineX)):
-            length = 10#TODO
-
-            #computing transformation relative to startpoint
-            tx = lineX[i] - lineX[0]
-            ty = lineY[i] - lineY[0]
-            theta = rotY[i]
-            #new midpt (x then y)
-            pt1[0] = midpt[0]*np.cos(theta) - midpt[1]*np.sin(theta) + tx + lineX[0]
-            pt1[1] = midpt[0]*np.sin(theta) + midpt[1]*np.cos(theta) + ty + lineY[0]
-            #new normpt (x then y)
-            pt2[0] = newNormpt[0]*np.cos(theta) - newNormpt[1]*np.sin(theta) + tx + lineX[0]
-            pt2[1] = newNormpt[0]*np.sin(theta) + newNormpt[1]*np.cos(theta) + ty + lineY[0]
-
-            for wall in cabinetWalls:
-                if wall.type == "open":
-                    continue
-                [Px,Py] = computeIntersection(pt1,pt2,wall.startPoint,wall.endPoint)
-                lengthTemp = lineLength(pt1,[Px,Py])
-
-                if lengthTemp < length:
-                    length = lengthTemp
-
-            maxLengthList2.append(length)
 
     # absLengthList = maxLengthList.copy()
-    absLengthList = [abs(i) for i in maxLengthList]
-    mindex = absLengthList.index(min(absLengthList))
+    # absLengthList = [abs(i) for i in maxLengthList]
+    # mindex = absLengthList.index(min(absLengthList))
 
+    #TODO find a better way to do this. Need to find largest absolute value associated with the appropriate wall
     threshold = 1
     minLength = maxLengthList[0]
     for i in range(len(maxLengthList)):
         minTemp = maxLengthList[i]
         if minTemp < minLength and abs(minTemp) < threshold:
             minLength = minTemp
+
 
     # minLength = maxLengthList[mindex]
     midpt[0] = midpt[0] + lineX[0]#backtransforming to world coordinates
@@ -199,6 +177,14 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
     #     minLength = min(maxLengthList2)
     normpt[0] = normpt[0] + lineX[0]
     normpt[1] = normpt[1] + lineY[0]
+
+    if abs(minLength) == 10:#TODO add to list of max lengths
+        for wall in cabinetWalls:
+            if wall.type == "open":
+                [Px,Py] = computeIntersection(midpt,normpt,wall.startPoint,wall.endPoint)
+                return [Px,Py]
+
+
     # print(min(maxLengthList),min(maxLengthList2))
     [newX,newY] = pointOnLineAtDist(midpt,normpt,minLength)
     return [newX,newY]
