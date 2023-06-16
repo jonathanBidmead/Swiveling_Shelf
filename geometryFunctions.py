@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib.path import Path
-
+from config import *
 #class defining walls
 class wall:
     def __init__(self,startPoint,endPoint,type):
@@ -61,7 +61,7 @@ def lineLength(pt1,pt2):
     try:
         return np.sqrt((x2-x1)**2+(y2-y1)**2)
     except:
-        return 10
+        return MAX_TEST_VECTOR_LENGTH
     
 def lengthToOpenDoor(angle,doorStart,doorEnd,pointStart,length):
     x1 = pointStart[0]

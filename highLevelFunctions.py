@@ -2,7 +2,7 @@ import numpy as np
 from geometryFunctions import *
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
-
+from config import *
 
 def computeMinLengthForEachAngle(maxLength,angleList,lineNumPoints,lineX,lineY,vectorLength,rotY,cabinetWalls):
     minLengthList = []
@@ -103,7 +103,7 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
 
     cabinetPath = createCabinetPath(cabinetWalls)
     reversedNormalFlag = False
-    length = 10#TODO set up defined variables for all these things
+    length = MAX_TEST_VECTOR_LENGTH
     midpt[0] = midpt[0] - lineX[0]
     midpt[1] = midpt[1] - lineY[0]
     normpt[0] = normpt[0] - lineX[0]
@@ -118,12 +118,12 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
         
         
         
-        length = 10#TODO
+        length = MAX_TEST_VECTOR_LENGTH
         reversedNormalFlag = False
         #computing transformation relative to startpoint
         tx = lineX[i] - lineX[0]
         ty = lineY[i] - lineY[0]
-        theta = rotY[i]
+        theta = rotY[i] - rotY[0]
         
         #new midpt (x then y)
         pt1[0] = midpt[0]*np.cos(theta) - midpt[1]*np.sin(theta) + tx + lineX[0]
@@ -151,8 +151,6 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
                     lengthTemp = - lengthTemp
                     # print(lengthTemp,midpt[0]+lineX[0],midpt[1]+lineY[0])
                 length = lengthTemp
-                chosenWall = wall
-        wallList.append(chosenWall)
         maxLengthList.append(length)
 
 
@@ -165,8 +163,9 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
     minLength = maxLengthList[0]
     for i in range(len(maxLengthList)):
         minTemp = maxLengthList[i]
-        if minTemp < minLength and abs(minTemp) < threshold:
-            minLength = minTemp
+        if minTemp < minLength:
+            if (abs(minTemp) < threshold and minTemp < 0) or minTemp > 0:#if mintemp is below 0 but smaller than the threshold, or if it is greater than 0, it works
+                minLength = minTemp
 
 
     # minLength = maxLengthList[mindex]
@@ -178,11 +177,12 @@ def ComputeMaxLengthAlongNormal(lineX,lineY,rotY,cabinetWalls,midpt,normpt):
     normpt[0] = normpt[0] + lineX[0]
     normpt[1] = normpt[1] + lineY[0]
 
-    if abs(minLength) == 10:#TODO add to list of max lengths
+    if abs(minLength) == MAX_TEST_VECTOR_LENGTH:
         for wall in cabinetWalls:
             if wall.type == "open":
                 [Px,Py] = computeIntersection(midpt,normpt,wall.startPoint,wall.endPoint)
-                return [Px,Py]
+                if not Px == None:
+                    return [Px,Py]
 
 
     # print(min(maxLengthList),min(maxLengthList2))
